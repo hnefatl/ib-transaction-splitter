@@ -1,3 +1,5 @@
+"""Breaks down Interactive Brokers transaction history CSVs by symbol."""
+
 import dataclasses
 import argparse
 import csv
@@ -8,13 +10,15 @@ class Args:
     in_file: str
     out_file: str
     symbol: str
+    list_symbols: bool
 
     @staticmethod
     def parse() -> "Args":
         p = argparse.ArgumentParser()
         p.add_argument("--in_file", default="transactions.csv")
         p.add_argument("--out_file", default="out.csv")
-        p.add_argument("--symbol", required=True)
+        p.add_argument("--symbol", default="")
+        p.add_argument("--list_symbols", default=False)
         args = p.parse_args()
         return Args(**vars(args))
 
@@ -45,6 +49,13 @@ def main():
 
         reader = csv.DictReader(rows, [h.strip() for h in header.split(",")])
         writer = csv.DictWriter(o, KEEP_COLUMNS.values())
+
+        if args.list_symbols:
+            print("\n".join({row["Symbol"] for row in reader}))
+            return
+        if not args.symbol:
+            print("--symbol is required")
+            return
 
         writer.writeheader()
         for row in reader:
